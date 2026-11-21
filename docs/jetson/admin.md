@@ -115,6 +115,42 @@ In the [Tailscale Admin Console](https://login.tailscale.com/admin/machines):
 1. Click `...` next to Jetson $\rightarrow$ **Share machine...**.
 2. Generate an invite link and share it with the student.
 
+### 3.5 Tailscale ACL & SSH Policy Management
+
+Manage access to Jetson devices using ACL tags and Tailscale SSH rules in the [Tailscale Access Controls](https://login.tailscale.com/admin/acls/file) editor.
+
+#### 1. Create & Attach `tag:jetson`
+
+1. In **Access Controls**, declare `tag:jetson` under `tagOwners`:
+   ```json
+   "tagOwners": {
+       "tag:jetson": ["autogroup:admin"],
+   },
+   ```
+2. In **Machines**, locate the Jetson device, click `...` $\rightarrow$ **Edit ACL tags...**, attach `tag:jetson`, and save.
+
+#### 2. Configure SSH Policy
+
+Update the `"ssh"` block in **Access Controls** to control SSH access to `tag:jetson` devices:
+
+```json
+"ssh": [
+    {
+        "action": "accept",
+        "src":    ["autogroup:member"],
+        "dst":    ["tag:jetson"],
+        "users":  ["autogroup:nonroot", "qzhua"],
+    },
+],
+```
+
+- **`src`**: `autogroup:member` allows tailnet members to initiate SSH connections.
+- **`dst`**: `tag:jetson` applies the policy to all devices tagged with `tag:jetson`.
+- **`users`**: Allows login as non-root accounts (`autogroup:nonroot`) and the `qzhua` user. Update this list whenever adding or revoking specific local account permissions.
+
+{: .note }
+> Make sure Tailscale SSH is enabled on the Jetson (`sudo tailscale set --ssh`) so the ACL `ssh` policy is enforced.
+
 ---
 
 ## 4. Student Account Management
